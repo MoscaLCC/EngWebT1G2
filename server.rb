@@ -1,17 +1,35 @@
+#!/usr/bin/env ruby -w
 require 'socket'
-require 'tclient'
 
-server = TCPServer.open(3001)
+class Server
+	def initialize(port,ip)
+		@server = TCPServer.open(ip,port)
+		%%@clients = Hash.new%
+		%%@connections[:clients] = @clients%
+		run
+	end
 
-loop{
-	client = server.accept
-	msg_cliente = client.recvfrom(10000)
+	def run
+		loop{
+			Thread.start(@server.accept) do |client|
+				nick_name=client.gets.chomp.to_sym
+				
+				%%@connections[:clients].each do |other_name, other_client|
+					if nick_name == other_name || client == other_client
+						client.puts "O Cliente já existe"
+						Thread.kill self
+					end
+				end%
 
-	puts "Mensagem do Cliente: #{msg_cliente}"
-	client.puts "Ola cliente, eu, o servidor, recebi a sua mensagem"
-	
-	cli = Tclient.new(client)
-	t = Thread.new{cli}
-	
-	t.start()
-}
+				puts "#{nick_name} #{client}"
+
+				%%@connections[:clients][nick_name] = client%
+
+				client.puts "Ligação establecida"
+			end
+		}.join
+	end
+
+end
+
+Server.new(3000,"localhost")

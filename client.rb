@@ -1,9 +1,46 @@
+#!/usr/bin/env ruby -w
 require 'socket'
 
-server = TCPSocket.open('localhost', 3001)
-server.puts "Ola servidor, eu cliente, estou a enviar esta mensagem"
+class Client
+	def initialize(server)
+		@server = server
+		@request = nil
+		@response = nil
+		listen
+		send
+		envia
+		@request.join
+		@response.join
+	end
 
-resp = server.recvfrom(10000)
-puts resp
+	def listen
+		@response = Thread.new do
+			loop{
+				msg = @server.gets.chomp
+				puts "#{msg}"
+			}
+		end
+	end
 
-server.close
+	def send
+		puts "Enter the username:"
+		@request = Thread.new do
+			loop{
+				msg = $stdin.gets.chomp
+				@server.puts(msg)
+			}
+		end
+		envia_dados
+	end
+
+	def envia
+		xdk = XDKsensor.new()
+		a = xdk.getdados()
+		puts a
+	end
+
+end
+
+server = TCPSocket.open("localhost", 3000)
+Client.new(server)
+

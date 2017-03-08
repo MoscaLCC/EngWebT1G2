@@ -1,16 +1,14 @@
-class Tclient import Runnable
+class Tclient
 
 	attr_reader :client, :nome
 
-	def initialize(cliente)
-		@client = cliente
+	def initialize()
 	end
 
-	def run()
-		@client.puts "Cliente estou no run"
+	def func
+		return "Fuck you"
+	
 	end
-
-
 
 
 end
