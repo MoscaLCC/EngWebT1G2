@@ -1,9 +1,11 @@
 #!/usr/bin/env ruby -w
 
 require "socket"
+require "sqlite3"
 
 class Server
 
+  attr_reader :bd
 
   def initialize( port, ip )
     @server = TCPServer.open( ip, port )
@@ -19,7 +21,7 @@ class Server
   end
 
   def criabasedados
-    @db.execute "CREATE TABLE IF NOT EXIXSTS XDKSENSOR(
+    @db.execute "CREATE TABLE IF NOT EXISTS XDKSENSOR(
       ID INTEGER PRIMARY KEY);"
     @db.execute "CREATE TABLE IF NOT EXISTS XDKDADOS(
       ID INTEGER PRIMARY KEY,
@@ -59,6 +61,7 @@ class Server
       #end
     }
   end
+
 end
 
 Server.new( 3000, "localhost" )
