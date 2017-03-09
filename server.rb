@@ -1,7 +1,8 @@
 #!/usr/bin/env ruby -w
-require "socket"
-class Server
 
+require "socket"
+
+class Server
 
 
   def initialize( port, ip )
@@ -12,7 +13,21 @@ class Server
     @connections[:server] = @server
     @connections[:rooms] = @rooms
     @connections[:clients] = @clients
+    @db = SQLite3::Database.open "wsbd.db"
+    criabasedados
     run
+  end
+
+  def criabasedados
+    @db.execute "CREATE TABLE IF NOT EXIXSTS XDKSENSOR(
+      ID INTEGER PRIMARY KEY);"
+    @db.execute "CREATE TABLE IF NOT EXISTS XDKDADOS(
+      ID INTEGER PRIMARY KEY,
+      XDKSENSOR_ID VARCHAR(10) NOT NULL,
+      TEMPERATURA FLOAT,
+      LATITUDE FLOAT NOT NULL,
+      LONGITUDE FLOAT NOT NULL,
+      FOREIGN KEY (XDKSENSOR_ID) REFERENCES XDKSENSOR(ID));"
   end
 
   def run
@@ -27,7 +42,7 @@ class Server
         end
         puts "#{nick_name} #{client}"
         @connections[:clients][nick_name] = client
-        client.puts "Connection established, Thank you for joining! Happy chatting"
+        client.puts "Connection established, Thank you for joining!"
         listen_user_messages( nick_name, client )
       end
     }.join
