@@ -32,33 +32,27 @@ class Client
 
 	def send
 		puts "Enter the username:"
+		@server.puts($stdin.gets.chomp)
 		@request = Thread.new do
 			loop{
-				msg = $stdin.gets.chomp
-				@server.puts(msg)
+				getdados
+				sleep(3)
 			}
 		end
 	end
 
 	def geradorall
-		@temperatura = Random.rand(0..100)
-		@long = Random.rand(0..100)
-		@ruido = Random.rand(0..100)
-		@lat = Random.rand(0..100)
-		@alt = Random.rand(0..100)
+		@temperatura = rand(100)
+		@long = rand(100)
+		@ruido = rand(100)
+		@lat = rand(100)
+		@alt = rand(100)
 	end
 
 	def getdados
 		geradorall
-		$stdin.puts("->"+temperatura+ruido+lat+long+alt+Time.now)
+		@server.puts("INFO->\n\ttemperatura:" + @temperatura.to_s + "\n\truido:" + @ruido.to_s + "\nGPS->\n\tlatitude:" + @lat.to_s + "\n\tlongitude:" + @long.to_s + "\n\taltitude:" + @alt.to_s + "\nTIME->\n\t" + Time.now.to_s + "\n\n\n\n\n")
 	end
-
-	def envia
-		
-	getdados
-		
-	end
-
 end
 
 server = TCPSocket.open("localhost", 3000)

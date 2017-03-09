@@ -36,11 +36,12 @@ class Server
   def listen_user_messages( username, client )
     loop {
       msg = client.gets.chomp
-      @connections[:clients].each do |other_name, other_client|
-      unless other_name == username
-         other_client.puts "#{username.to_s}: #{msg}"
-        end
-      end
+      puts "#{msg}"
+     # @connections[:clients].each do |other_name, other_client|
+      #unless other_name == username
+       #  other_client.puts "#{username.to_s}: #{msg}"
+       # end
+      #end
     }
   end
 end
