@@ -7,7 +7,8 @@ class Client
 
 	def initialize(server)
 		@server = server
-		@request = nil
+		@requesttemp = nil
+		@requestruid = nil
 		@response = nil
 		@temperatura=0
 		@ruido=0
@@ -16,7 +17,8 @@ class Client
 		@alt=0
 		listen
 		send
-		@request.join
+		@requestruid.join
+		@requesttemp.join
 		@response.join
 		
 	end
@@ -30,13 +32,27 @@ class Client
 		end
 	end
 
-	def send
-		puts "Enter the username:"
+	def send	
+		puts "Digite o seu ID:"
 		@server.puts($stdin.gets.chomp)
-		@request = Thread.new do
+		sendTemp
+		sendRuid
+	end
+
+	def sendTemp
+		@requesttemp = Thread.new do
 			loop{
-				getdados
-				sleep(3)
+				getdadost
+				sleep(30)
+			}
+		end
+	end
+
+	def sendRuid
+		@requestruid = Thread.new do
+			loop{
+				getdadosr
+				sleep(1)
 			}
 		end
 	end
@@ -49,9 +65,14 @@ class Client
 		@alt = rand(100)
 	end
 
-	def getdados
+	def getdadost
 		geradorall
-		@server.puts("INFO->\n\ttemperatura:" + @temperatura.to_s + "\n\truido:" + @ruido.to_s + "\nGPS->\n\tlatitude:" + @lat.to_s + "\n\tlongitude:" + @long.to_s + "\n\taltitude:" + @alt.to_s + "\nTIME->\n\t" + Time.now.to_s + "\n\n\n\n\n")
+		@server.puts("Temperatura_" + @temperatura.to_s + "_GPS_(" + @lat.to_s + "," + @long.to_s + "," + @alt.to_s + ")_Data_" + Time.now.to_s)
+	end
+
+	def getdadosr
+		geradorall
+		@server.puts("Ruido_" + @ruido.to_s + "_GPS_(" + @lat.to_s + "," + @long.to_s + "," + @alt.to_s + ")_Data_" + Time.now.to_s)
 	end
 end
 
