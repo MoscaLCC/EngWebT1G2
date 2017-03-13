@@ -23,14 +23,16 @@ class Server
 
   def criabasedados
     @db.execute "CREATE TABLE IF NOT EXISTS XDKSENSOR(
-      ID INTEGER PRIMARY KEY);"
+      ID TEXT PRIMARY KEY,
+      GPSATUAL TEXT);"
     @db.execute "CREATE TABLE IF NOT EXISTS XDKDADOS(
-      ID INTEGER PRIMARY KEY,
-      XDKSENSOR_ID VARCHAR(10) NOT NULL,
-      TEMPERATURA FLOAT,
-      LATITUDE FLOAT NOT NULL,
-      LONGITUDE FLOAT NOT NULL,
-      FOREIGN KEY (XDKSENSOR_ID) REFERENCES XDKSENSOR(ID));"
+      XDKID INTEGER PRIMARY KEY,
+      TIPO TEXT,
+      VALOR INTEGER,
+      GPS TEXT,
+      DATA TEXT,
+      XDKSENSOR_XDKSENSORID TEXT,
+      FOREIGN KEY (XDKSENSOR_XDKSENSORID) REFERENCES XDKSENSOR(ID));"
   end
 
   def run
@@ -45,6 +47,8 @@ class Server
           end
         end
         puts "<ENTRADA> #{nick_name} >> #{client} <ENTRADA>"
+        @db.execute "INSERT OR IGNORE INTO XDKSENSOR(ID) VALUES('#{nick_name}')"
+        puts "Cheguei aqui"
         # coloca o valor de quantidades leituras enquanto online a 0 
         @connections[:clients][nick_name] = client
         client.puts "Conexão establecida, Obrigado por se Juntar a nós!"
@@ -63,6 +67,7 @@ class Server
     @response = Thread.new do
     loop {
       msg = client.gets.chomp
+      #puts "#{msg}"
 
       if msg == "exit"
             puts "<SAIDA> #{username} >> #{client} <SAIDA>"
@@ -72,6 +77,9 @@ class Server
     
       else 
       values = msg.split('_')
+
+      #puts "#{values[0]}"
+      @db.execute "INSERT INTO XDKDADOS(TIPO, VALOR, GPS, DATA, XDKSENSOR_XDKSENSORID) VALUES('#{values[0]}', '#{values[1]}', '#{values[3]}', '#{values[5]}', '#{username}');"
 
       #estes puts são de teste, estes dados são guradaddos na BD 
       
