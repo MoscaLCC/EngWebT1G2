@@ -38,26 +38,39 @@ class Server
       Thread.start(@server.accept) do | client |
         nick_name = client.gets.chomp.to_sym
         @connections[:clients].each do |other_name, other_client|
-          if nick_name == other_name || client == other_client
+          if @connections[:clients][nick_name] != nil
+            # com a BD vai ser preciso ver se ele ja esta registado na BD, se não estiver regista-lo
             client.puts "Esse aparelho ja e tem sessão iniciada"
             Thread.kill self
           end
         end
-        puts "#{nick_name} #{client}"
+        puts "<ENTRADA> #{nick_name} >> #{client} <ENTRADA>"
+        # coloca o valor de quantidades leituras enquanto online a 0 
         @connections[:clients][nick_name] = client
         client.puts "Conexão establecida, Obrigado por se Juntar a nós!"
-        listen_user_messages( nick_name, client )
+        central_messages( nick_name, client )
         menu
 
       end
     }.join
     @response.join
+    
+ 
+
   end
 
-  def listen_user_messages( username, client )
+  def central_messages( username, client )
     @response = Thread.new do
     loop {
       msg = client.gets.chomp
+
+      if msg == "exit"
+            puts "<SAIDA> #{username} >> #{client} <SAIDA>"
+            #falar ir a base de dados e por a imprimir o valor de leituras 
+            @connections[:clients][username] = nil
+
+    
+      else 
       values = msg.split('_')
 
       #estes puts são de teste, estes dados são guradaddos na BD 
@@ -69,9 +82,14 @@ class Server
       #puts values[3] valor de GPS
       #puts values[4] "Data"
       #puts values[5] valor da Data
-      }
+      # aciona +1 ao numero de leitura na BD
+      
+      end
+    }
     end
   end
+
+   
 
   def menu 
     puts "0-Listar os utilizador que estão ligados"
@@ -87,8 +105,10 @@ class Server
   end
 
   def listaUtl
-    puts @connections[:clients]
+    
 
+    puts @connections[:clients]
+    #esta a imprimir todos ofline e online, probbavelmente com a BD resolve-se facil
     #por cada cliente ir a BD buscar as ultimas coords e imprimilas  
     menu
   end  
@@ -97,7 +117,9 @@ class Server
 
     puts "Insira o ID do cliente:"
     id = $stdin.gets.chomp
-    puts id
+
+    puts "O sensor que quer analisar:"
+    sens = $stdin.gets.chomp
 
     #acabar de listar os dados que iram estar na BD
     menu
@@ -108,5 +130,5 @@ end
 Server.new( 3000, "localhost" )
 
 
-##falta fazer o ponto 6/ 7/ 8 ... é ease
+
 

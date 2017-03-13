@@ -3,7 +3,7 @@ require 'socket'
 
 class Client
 
-	attr_reader :temperatura, :ruido, :lat, :long, :alt
+	attr_reader :temperatura, :ruido, :lat, :long, :alt, :esc
 
 	def initialize(server)
 		@server = server
@@ -15,6 +15,7 @@ class Client
 		@lat=0
 		@long=0
 		@alt=0
+		@esc=""
 		listen
 		send
 		@requestruid.join
@@ -25,9 +26,9 @@ class Client
 
 	def listen
 		@response = Thread.new do
+			
 			loop{
-				msg = @server.gets.chomp
-				puts "#{msg}"
+				
 			}
 		end
 	end
@@ -37,6 +38,21 @@ class Client
 		@server.puts($stdin.gets.chomp)
 		sendTemp
 		sendRuid
+		
+		while @esc != "exit" do
+				
+				@esc = $stdin.gets.chomp
+
+				if esc == "exit"
+     				@server.puts(@esc)
+     			end
+			
+		end
+
+		@requestruid.kill
+		@requesttemp.kill
+		@response.kill
+
 	end
 
 	def sendTemp
