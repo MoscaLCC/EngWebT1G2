@@ -5,18 +5,13 @@ require "sqlite3"
 
 class Server
 
-  #attr_reader :bd
-
   def initialize( port, ip )
     @hash = Hash.new
     @leitura = 0
     @server = TCPServer.open( ip, port )
     @connections = Hash.new
-    @rooms = Hash.new
     @clients = Hash.new
     @response = nil
-    @connections[:server] = @server
-    @connections[:rooms] = @rooms
     @connections[:clients] = @clients
     @db = SQLite3::Database.open "wsbd.db"
     criabasedados
@@ -26,7 +21,8 @@ class Server
   def criabasedados
     @db.execute "CREATE TABLE IF NOT EXISTS XDKSENSOR(
       ID TEXT PRIMARY KEY,
-      GPSATUAL TEXT);"
+      GPSATUAL TEXT,
+      NLEITURA TEXT);"
     @db.execute "CREATE TABLE IF NOT EXISTS XDKDADOS(
       XDKID INTEGER PRIMARY KEY,
       TIPO TEXT,
@@ -41,16 +37,14 @@ class Server
     loop {
       Thread.start(@server.accept) do | client |
         nick_name = client.gets.chomp.to_sym
-        @connections[:clients].each do |other_name, other_client|
-          if @connections[:clients][nick_name] != nil
-            # com a BD vai ser preciso ver se ele ja esta registado na BD, se não estiver regista-lo
-            client.puts "Esse aparelho ja e tem sessão iniciada"
+          if @connections[:clients].has_key?(nick_name)
+            client.puts "exit"
             Thread.kill self
           end
-        end
+ 
         puts "<ENTRADA> #{nick_name} >> #{client} <ENTRADA>"
         @db.execute "INSERT OR IGNORE INTO XDKSENSOR(ID) VALUES('#{nick_name}')"
-        # coloca o valor de quantidades leituras enquanto online a 0 
+        @db.execute "UPDATE XDKSENSOR SET NLEITURA=0 WHERE ID='#{nick_name}'"
         @connections[:clients][nick_name] = client
         client.puts "Conexão establecida, Obrigado por se Juntar a nós!"
         central_messages( nick_name, client )
@@ -68,14 +62,14 @@ class Server
     @response = Thread.new do
     loop {
       msg = client.gets.chomp
-      #puts "#{msg}"
 
       if msg == "exit"
-            puts "<SAIDA> #{username} >> #{client} <SAIDA>"
-            #puts @leitura
-            client.puts(@leitura)
-            #falar ir a base de dados e por a imprimir o valor de leituras 
-            @connections[:clients][username] = nil
+            val = @db.execute "SELECT NLEITURA FROM XDKSENSOR WHERE ID='#{username}'"
+            xval=val[0].to_s
+            yval = xval.scan(/\d+/).join().to_i
+            puts "<SAIDA> #{username} >> Nº de leituras: #{yval} <SAIDA>"
+            
+            @connections[:clients].delete(username)
 
     
       else 
@@ -83,9 +77,12 @@ class Server
 
       @db.execute "INSERT INTO XDKDADOS(TIPO, VALOR, GPS, DATA, XDKSENSOR_XDKSENSORID) VALUES('#{values[0]}', '#{values[1]}', '#{values[3]}', '#{values[5]}', '#{username}');"
       @db.execute "UPDATE XDKSENSOR SET GPSATUAL='#{values[3]}' WHERE ID='#{username}'"
-      @leitura += 1
-
-      # aciona +1 ao numero de leitura na BD
+      val = @db.execute "SELECT NLEITURA FROM XDKSENSOR WHERE ID='#{username}'"
+      xval = val[0].to_s
+      yval = xval.scan(/\d+/).join().to_i
+      yval += 1
+      yval.to_s
+      @db.execute "UPDATE XDKSENSOR SET NLEITURA='#{yval}' WHERE ID='#{username}'"
       
       end
     }
@@ -101,24 +98,17 @@ class Server
     esc = $stdin.gets.chomp
 
     if esc == "0"
-      #listaUtl
+      listaUtl
     else 
       listDados
     end
   end
 
   def listaUtl
-    #puts @connections[:clients]
-
-    @connections.each do |key|
-      row = @db.get_first_row "SELECT * FROM XDKSENSOR WHERE ID='#{key}'"
-      puts row.join "\s"
-    end
-
-    #esta a imprimir todos ofline e online, probbavelmente com a BD resolve-se facil
-    #por cada cliente ir a BD buscar as ultimas coords e imprimilas  
+    @connections[:clients].each { |key, value|
+      imprimesensor(key)
+    }
     menu
-
   end  
 
   def listDados
@@ -130,9 +120,15 @@ class Server
 
     imprimedabd(id, sens)
 
-    #acabar de listar os dados que iram estar na BD
     menu
   end  
+
+  def imprimesensor(key)
+    val = @db.execute "SELECT GPSATUAL FROM XDKSENSOR WHERE ID='#{key}'"
+    for row in val do
+      puts "#{key} -> " + row.join 
+    end
+  end
 
   def imprimedabd(id, sens)
     val = @db.execute "SELECT * FROM XDKDADOS WHERE XDKSENSOR_XDKSENSORID='#{id}' AND TIPO='#{sens}'"
