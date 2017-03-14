@@ -5,9 +5,11 @@ require "sqlite3"
 
 class Server
 
-  attr_reader :bd
+  #attr_reader :bd
 
   def initialize( port, ip )
+    @hash = Hash.new
+    @leitura = 0
     @server = TCPServer.open( ip, port )
     @connections = Hash.new
     @rooms = Hash.new
@@ -48,7 +50,6 @@ class Server
         end
         puts "<ENTRADA> #{nick_name} >> #{client} <ENTRADA>"
         @db.execute "INSERT OR IGNORE INTO XDKSENSOR(ID) VALUES('#{nick_name}')"
-        puts "Cheguei aqui"
         # coloca o valor de quantidades leituras enquanto online a 0 
         @connections[:clients][nick_name] = client
         client.puts "Conexão establecida, Obrigado por se Juntar a nós!"
@@ -71,6 +72,8 @@ class Server
 
       if msg == "exit"
             puts "<SAIDA> #{username} >> #{client} <SAIDA>"
+            #puts @leitura
+            client.puts(@leitura)
             #falar ir a base de dados e por a imprimir o valor de leituras 
             @connections[:clients][username] = nil
 
@@ -78,18 +81,10 @@ class Server
       else 
       values = msg.split('_')
 
-      #puts "#{values[0]}"
       @db.execute "INSERT INTO XDKDADOS(TIPO, VALOR, GPS, DATA, XDKSENSOR_XDKSENSORID) VALUES('#{values[0]}', '#{values[1]}', '#{values[3]}', '#{values[5]}', '#{username}');"
+      @db.execute "UPDATE XDKSENSOR SET GPSATUAL='#{values[3]}' WHERE ID='#{username}'"
+      @leitura += 1
 
-      #estes puts são de teste, estes dados são guradaddos na BD 
-      
-      #puts username 
-      #puts values[0] tipo = {"Temperatura", "Ruido"}
-      #puts values[1] valor 
-      #puts values[2] "GPS"
-      #puts values[3] valor de GPS
-      #puts values[4] "Data"
-      #puts values[5] valor da Data
       # aciona +1 ao numero de leitura na BD
       
       end
@@ -106,32 +101,47 @@ class Server
     esc = $stdin.gets.chomp
 
     if esc == "0"
-      listaUtl
+      #listaUtl
     else 
       listDados
     end
   end
 
   def listaUtl
-    
+    #puts @connections[:clients]
 
-    puts @connections[:clients]
+    @connections.each do |key|
+      row = @db.get_first_row "SELECT * FROM XDKSENSOR WHERE ID='#{key}'"
+      puts row.join "\s"
+    end
+
     #esta a imprimir todos ofline e online, probbavelmente com a BD resolve-se facil
     #por cada cliente ir a BD buscar as ultimas coords e imprimilas  
     menu
+
   end  
 
   def listDados
-
     puts "Insira o ID do cliente:"
     id = $stdin.gets.chomp
 
     puts "O sensor que quer analisar:"
     sens = $stdin.gets.chomp
 
+    imprimedabd(id, sens)
+
     #acabar de listar os dados que iram estar na BD
     menu
   end  
+
+  def imprimedabd(id, sens)
+    val = @db.execute "SELECT * FROM XDKDADOS WHERE XDKSENSOR_XDKSENSORID='#{id}' AND TIPO='#{sens}'"
+    puts "\n"
+    for row in val do
+      puts row.join "\s"
+    end
+    puts "\n"
+  end
 
 end
 
