@@ -46,7 +46,7 @@ class Server
         @db.execute "INSERT OR IGNORE INTO XDKSENSOR(ID) VALUES('#{nick_name}')"
         @db.execute "UPDATE XDKSENSOR SET NLEITURA=0 WHERE ID='#{nick_name}'"
         @connections[:clients][nick_name] = client
-        client.puts "Conexão establecida, Obrigado por se Juntar a nós!"
+        client.puts "Conexão estabelecida, Obrigado por se Juntar a nós!"
         central_messages( nick_name, client )
         menu
 
